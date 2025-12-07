@@ -61,37 +61,6 @@ Before you begin, ensure you have the following installed:
 
 ## 🚀 Quick Start
 
-### Option 1: Docker Compose (Recommended)
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd uniapply-app
-   ```
-
-2. **Set up environment variables**
-   ```bash
-   cp backend/.env.example backend/.env
-   # Edit backend/.env with your configuration
-   ```
-
-3. **Start all services**
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Initialize database**
-   ```bash
-   docker-compose exec backend npm run migrate
-   ```
-
-5. **Access the application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:3001
-   - PostgreSQL: localhost:5432
-   - Redis: localhost:6379
-
-### Option 2: Manual Setup
 
 #### Backend Setup
 
@@ -120,17 +89,9 @@ Before you begin, ensure you have the following installed:
    psql -U postgres -c "CREATE DATABASE uniapply_db;"
    ```
 
-5. **Start Redis** (if using Redis for sessions)
-   ```bash
-   redis-server
-   ```
 
-6. **Initialize database tables**
-   ```bash
-   npm run migrate
-   ```
 
-7. **Start the backend server**
+5. **Start the backend server**
    ```bash
    npm run dev  # Development mode
    # or
@@ -203,47 +164,6 @@ uniapply-app/
 
 ## 🔐 Environment Variables
 
-### Backend (.env)
-```env
-# Server
-PORT=3001
-NODE_ENV=development
-
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=uniapply_db
-DB_USER=postgres
-DB_PASSWORD=postgres
-
-# JWT
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRES_IN=7d
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# AI API
-AI_API_KEY=your-ai-api-key
-AI_API_URL=https://api.openai.com/v1
-
-# File Upload
-UPLOAD_DIR=./uploads
-MAX_FILE_SIZE=5242880
-
-# Payment Gateway
-RAZORPAY_KEY_ID=your-razorpay-key
-RAZORPAY_KEY_SECRET=your-razorpay-secret
-
-# Frontend URL
-FRONTEND_URL=http://localhost:3000
-```
-
-### Frontend (.env.local)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-```
 
 ## 🗄️ Database Schema
 
@@ -279,60 +199,9 @@ The application uses PostgreSQL with the following main tables:
 6. **Approve Application** → Final approval after verification
 7. **Manage Configuration** → Configure document requirements per program
 
-## 🧪 Testing
 
-### Backend API Testing
-```bash
-cd backend
-npm test  # If tests are set up
-```
 
-### Frontend Testing
-```bash
-cd frontend
-npm test  # If tests are set up
-```
 
-## 📦 Deployment
-
-### Deploy to Heroku/Render/Railway
-
-1. **Backend Deployment**
-   - Set up PostgreSQL addon
-   - Set up Redis addon (optional)
-   - Configure environment variables
-   - Deploy backend code
-
-2. **Frontend Deployment**
-   - Set `NEXT_PUBLIC_API_URL` to backend URL
-   - Deploy to Vercel/Netlify or similar
-
-### Docker Deployment
-```bash
-docker-compose up -d
-```
-
-## 🔧 Development
-
-### Running in Development Mode
-
-**Backend:**
-```bash
-cd backend
-npm run dev  # Uses nodemon for auto-reload
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm run dev  # Next.js development server
-```
-
-### Database Migrations
-```bash
-cd backend
-npm run migrate
-```
 
 ## 📝 API Documentation
 
@@ -372,33 +241,4 @@ npm run migrate
 - `GET /api/support/tickets` - Get tickets
 - `PUT /api/support/tickets/:id` - Update ticket
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 👥 Authors
-
-- Your Name - Initial work
-
-## 🙏 Acknowledgments
-
-- OpenAI for AI document processing capabilities
-- Next.js and React communities
-- All contributors and testers
-
-## 📞 Support
-
-For support, email support@uniapply.com or create a support ticket in the application.
-
----
-
-**Note**: This is a full-stack application. Make sure both backend and frontend are running for the application to work properly.
 
