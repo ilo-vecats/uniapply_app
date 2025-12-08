@@ -7,9 +7,19 @@ import AdminSidebar from '@/components/AdminSidebar'
 import AdminHeader from '@/components/AdminHeader'
 import api from '@/lib/api'
 
+type University = {
+  id: number
+  name: string
+  code: string
+  location: string
+  programs_count: number
+}
+
 export default function AdminUniversitiesPage() {
   const router = useRouter()
-  const [universities, setUniversities] = useState([])
+
+
+  const [universities, setUniversities] = useState<University[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -27,9 +37,10 @@ export default function AdminUniversitiesPage() {
     try {
       const response = await api.get('/admin/universities')
       setUniversities(response.data.data || [])
-    } catch (error: any) {
-      // If endpoint doesn't exist, use mock data
+    } catch (error) {
       console.log('Universities endpoint not available, using mock data')
+
+ 
       setUniversities([
         { id: 1, name: 'IIT Delhi', code: 'IITD', location: 'New Delhi', programs_count: 12 },
         { id: 2, name: 'IIT Bombay', code: 'IITB', location: 'Mumbai', programs_count: 15 },
@@ -65,14 +76,18 @@ export default function AdminUniversitiesPage() {
               <h1 className="text-2xl font-bold text-slate-900">Universities</h1>
               <p className="text-slate-500">Manage partner universities</p>
             </div>
+
             <button className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 flex items-center gap-2">
               <i className="fas fa-plus"></i> Add University
             </button>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            {universities.map((uni: any) => (
-              <div key={uni.id} className="bg-white rounded-xl border border-slate-200 p-5">
+            {universities.map((uni) => (
+              <div
+                key={uni.id}
+                className="bg-white rounded-xl border border-slate-200 p-5"
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
                     <i className="fas fa-university text-orange-600 text-xl"></i>
@@ -81,13 +96,20 @@ export default function AdminUniversitiesPage() {
                     <i className="fas fa-ellipsis-v"></i>
                   </button>
                 </div>
-                <h3 className="font-semibold text-slate-900 text-lg mb-1">{uni.name}</h3>
+
+                <h3 className="font-semibold text-slate-900 text-lg mb-1">
+                  {uni.name}
+                </h3>
+
                 <p className="text-sm text-slate-500 mb-3">
                   <i className="fas fa-map-marker-alt mr-1"></i>
                   {uni.location}
                 </p>
+
                 <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                  <span className="text-sm text-slate-600">{uni.programs_count || 0} Programs</span>
+                  <span className="text-sm text-slate-600">
+                    {uni.programs_count} Programs
+                  </span>
                   <button className="text-orange-600 text-sm font-medium hover:text-orange-700">
                     Manage
                   </button>
@@ -95,9 +117,9 @@ export default function AdminUniversitiesPage() {
               </div>
             ))}
           </div>
+
         </div>
       </div>
     </div>
   )
 }
-
