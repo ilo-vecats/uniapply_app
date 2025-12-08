@@ -28,6 +28,9 @@ type Analytics = {
   aiStatusCounts: AIStatusCount[]
   revenue: Revenue
   recentApplications: number
+  totalApplications?: number
+  pendingReview?: number
+  openTickets?: number
 }
 
 type Application = {
@@ -75,22 +78,45 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
+      setLoading(true)
       const [analyticsRes, applicationsRes] = await Promise.all([
         adminAPI.getAnalytics(),
         adminAPI.getApplications({ limit: 10 })
       ])
 
-      setAnalytics(analyticsRes.data.data)
-      setApplications(applicationsRes.data.data || [])
-    } catch (error) {
-      console.error('Failed to load data:', error)
+      if (analyticsRes.data?.success && analyticsRes.data?.data) {
+        setAnalytics(analyticsRes.data.data)
+      } else {
+        // Fallback if data structure is different
+        setAnalytics({
+          statusCounts: [],
+          aiStatusCounts: [],
+          revenue: { application_fee_revenue: 0, issue_resolution_revenue: 0, total_transactions: 0 },
+          recentApplications: 0,
+          totalApplications: 0,
+          pendingReview: 0,
+          openTickets: 0
+        })
+      }
 
-    
+      if (applicationsRes.data?.success && applicationsRes.data?.data) {
+        setApplications(applicationsRes.data.data || [])
+      } else {
+        setApplications([])
+      }
+    } catch (error: any) {
+      console.error('Failed to load data:', error)
+      console.error('Error details:', error.response?.data)
+
+      // Set fallback data
       setAnalytics({
         statusCounts: [],
         aiStatusCounts: [],
-        revenue: { application_fee_revenue: 0 },
-        recentApplications: 0
+        revenue: { application_fee_revenue: 0, issue_resolution_revenue: 0, total_transactions: 0 },
+        recentApplications: 0,
+        totalApplications: 0,
+        pendingReview: 0,
+        openTickets: 0
       })
       setApplications([])
     } finally {
