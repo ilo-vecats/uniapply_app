@@ -20,7 +20,6 @@ type Student = {
 export default function AdminStudentsPage() {
   const router = useRouter()
 
-  // ✅ FORCE TYPE — this kills the `never[]` bug permanently
   const [students, setStudents] = useState<Student[]>([] as Student[])
   const [loading, setLoading] = useState<boolean>(true)
 
