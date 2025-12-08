@@ -122,16 +122,35 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
-// Test database connection on startup
+// Test database connection and auto-migrate if needed
 async function testDatabaseConnection() {
   try {
     const { query } = require('./config/database');
     await query('SELECT 1');
     console.log('✅ Database connection successful');
+    
+    // Check if users table exists, if not, run migration
+    try {
+      await query('SELECT 1 FROM users LIMIT 1');
+      console.log('✅ Database tables exist');
+    } catch (tableError) {
+      if (tableError.message && tableError.message.includes('does not exist')) {
+        console.log('⚠️  Database tables not found. Running migration...');
+        try {
+          const { init } = require('./config/database');
+          await init();
+          console.log('✅ Database migration completed successfully!');
+        } catch (migrationError) {
+          console.error('❌ Migration failed:', migrationError.message);
+          console.error('⚠️  Please run: npm run migrate');
+        }
+      } else {
+        throw tableError;
+      }
+    }
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
-    console.error('⚠️  Make sure DB_URL is set correctly and database tables exist.');
-    console.error('⚠️  Run: npm run migrate (to create tables)');
+    console.error('⚠️  Make sure DB_URL is set correctly in environment variables.');
   }
 }
 

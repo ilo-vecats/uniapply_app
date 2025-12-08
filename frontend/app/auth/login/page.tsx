@@ -32,10 +32,26 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      const errorMessage = err.response?.data?.message 
-        || err.response?.data?.error 
-        || err.message 
-        || 'Login failed. Please check your credentials and try again.';
+      console.error('Error details:', {
+        response: err.response?.data,
+        message: err.message,
+        status: err.response?.status
+      });
+      
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = typeof err.response.data.error === 'string' 
+          ? err.response.data.error 
+          : 'Database error occurred. Please contact support.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. The database might not be set up yet. Please contact support.';
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false)

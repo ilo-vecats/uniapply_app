@@ -47,10 +47,12 @@ api.interceptors.response.use(
       console.error('API Error:', {
         status: error.response.status,
         data: error.response.data,
-        url: error.config?.url
+        url: error.config?.url,
+        message: error.response.data?.message || error.message
       });
     } else if (error.request) {
       console.error('Network Error:', error.request);
+      console.error('No response received from server. Is the backend running?');
     } else {
       console.error('Error:', error.message);
     }
