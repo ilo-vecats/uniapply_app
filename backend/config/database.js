@@ -11,8 +11,12 @@ if (!process.env.DB_URL) {
 // Clean up connection string for Neon compatibility
 // Remove channel_binding=require if present (causes issues with Neon)
 let connectionString = process.env.DB_URL;
-if (connectionString.includes('channel_binding=require')) {
-  connectionString = connectionString.replace(/[&?]channel_binding=require/g, '');
+if (connectionString && connectionString.includes('channel_binding=require')) {
+  // Remove both ?channel_binding=require and &channel_binding=require
+  connectionString = connectionString
+    .replace(/[&?]channel_binding=require/g, '')
+    .replace(/channel_binding=require[&?]/g, '')
+    .replace(/channel_binding=require$/, '');
   console.log('⚠️  Removed channel_binding=require from connection string for Neon compatibility');
 }
 
