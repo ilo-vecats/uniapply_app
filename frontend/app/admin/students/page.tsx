@@ -7,9 +7,21 @@ import AdminSidebar from '@/components/AdminSidebar'
 import AdminHeader from '@/components/AdminHeader'
 import api from '@/lib/api'
 
+
+type Student = {
+  id: number
+  first_name: string
+  last_name: string
+  email: string
+  phone?: string
+  total_applications: number
+  created_at: string
+}
+
 export default function AdminStudentsPage() {
   const router = useRouter()
-  const [students, setStudents] = useState([])
+
+  const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -29,8 +41,9 @@ export default function AdminStudentsPage() {
       const response = await api.get('/admin/students')
       setStudents(response.data.data || [])
     } catch (error: any) {
-      // If endpoint doesn't exist, use mock data
+    
       console.log('Students endpoint not available, using mock data')
+
       setStudents([
         {
           id: 1,
@@ -97,6 +110,7 @@ export default function AdminStudentsPage() {
                   <th className="text-left text-sm font-medium text-slate-500 px-4 py-3">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {students.length === 0 ? (
                   <tr>
@@ -105,8 +119,11 @@ export default function AdminStudentsPage() {
                     </td>
                   </tr>
                 ) : (
-                  students.map((student: any) => (
-                    <tr key={student.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  students.map((student) => (
+                    <tr
+                      key={student.id}
+                      className="border-t border-slate-100 hover:bg-slate-50"
+                    >
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -119,16 +136,25 @@ export default function AdminStudentsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-slate-600">{student.email}</td>
-                      <td className="px-4 py-4 text-sm text-slate-600">{student.phone || 'N/A'}</td>
+
+                      <td className="px-4 py-4 text-sm text-slate-600">
+                        {student.email}
+                      </td>
+
+                      <td className="px-4 py-4 text-sm text-slate-600">
+                        {student.phone || 'N/A'}
+                      </td>
+
                       <td className="px-4 py-4">
                         <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs font-medium">
                           {student.total_applications || 0}
                         </span>
                       </td>
+
                       <td className="px-4 py-4 text-sm text-slate-600">
                         {new Date(student.created_at).toLocaleDateString()}
                       </td>
+
                       <td className="px-4 py-4">
                         <button className="text-orange-600 text-sm hover:text-orange-700">
                           View Details
@@ -138,6 +164,7 @@ export default function AdminStudentsPage() {
                   ))
                 )}
               </tbody>
+
             </table>
           </div>
         </div>
@@ -145,4 +172,3 @@ export default function AdminStudentsPage() {
     </div>
   )
 }
-
