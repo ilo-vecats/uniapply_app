@@ -150,7 +150,8 @@ async function init() {
         admin_verification_status VARCHAR(50),
         admin_notes TEXT,
         is_rejected BOOLEAN DEFAULT false,
-        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     console.log('✅ Documents table created');

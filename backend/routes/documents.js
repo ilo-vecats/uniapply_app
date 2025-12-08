@@ -82,6 +82,11 @@ router.post('/upload', authenticate, requireStudent, upload.single('document'), 
 
     const application = appResult.rows[0];
 
+    // Parse JSONB fields
+    const personalInfo = typeof application.personal_info === 'string' 
+      ? JSON.parse(application.personal_info) 
+      : (application.personal_info || {});
+
     // Process document with AI
     const aiResult = await processDocument(
       documentType,
@@ -89,7 +94,7 @@ router.post('/upload', authenticate, requireStudent, upload.single('document'), 
       {
         firstName: application.first_name,
         lastName: application.last_name,
-        dateOfBirth: application.personal_info?.dateOfBirth,
+        dateOfBirth: personalInfo.dateOfBirth || personalInfo.dob || null,
         minPercentage: application.program_id ? await getMinPercentage(application.program_id) : null
       }
     );
@@ -97,7 +102,7 @@ router.post('/upload', authenticate, requireStudent, upload.single('document'), 
     // Save document to database
     const docResult = await query(
       `INSERT INTO documents 
-       (application_id, document_type, file_name, file_path, file_size, mime_type, ai_extracted_data, ai_verification_status)
+       (application_id, document_type, file_name, file_path, file_size, mime_type, extracted_data, ai_verification_status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
@@ -107,7 +112,7 @@ router.post('/upload', authenticate, requireStudent, upload.single('document'), 
         req.file.path,
         req.file.size,
         req.file.mimetype,
-        JSON.stringify(aiResult.extractedData),
+        JSON.stringify(aiResult.extractedData || {}),
         aiResult.verification.isValid ? 'verified' : 'flagged'
       ]
     );
