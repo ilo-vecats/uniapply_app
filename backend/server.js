@@ -28,9 +28,20 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://uniapply-app-1.onrender.com'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Blocked by CORS'));
+    }
+  },
+  credentials: true,
 }));
 
 app.use(express.json());
