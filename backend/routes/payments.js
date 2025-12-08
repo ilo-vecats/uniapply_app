@@ -174,7 +174,7 @@ router.post('/verify', authenticate, async (req, res) => {
       `UPDATE payments 
        SET status = $1,
            transaction_id = $2,
-           payment_gateway_response = $3,
+           payment_data = $3,
            updated_at = CURRENT_TIMESTAMP
        WHERE payment_id = $4
        RETURNING *`,
@@ -192,19 +192,18 @@ router.post('/verify', authenticate, async (req, res) => {
       if (payment.payment_type === 'application_fee') {
         await query(
           `UPDATE applications 
-           SET payment_status = 'completed',
-               payment_amount = $1,
-               status = 'payment_received',
+           SET status = 'payment_received',
                updated_at = CURRENT_TIMESTAMP
-           WHERE id = $2`,
-          [payment.amount, payment.application_id]
+           WHERE id = $1`,
+          [payment.application_id]
         );
       } else if (payment.payment_type === 'issue_resolution') {
         // Allow student to view issue details and resubmit
         await query(
           `UPDATE applications 
-           SET payment_status = 'issue_resolution_paid',
-           updated_at = CURRENT_TIMESTAMP
+           SET issue_raised = false,
+               status = 'under_review',
+               updated_at = CURRENT_TIMESTAMP
            WHERE id = $1`,
           [payment.application_id]
         );
