@@ -73,10 +73,10 @@ router.get('/', authenticate, requireStudent, async (req, res) => {
   try {
     const result = await query(
       `SELECT a.*, p.name as program_name, p.code as program_code, 
-              u.name as university_name, u.code as university_code
+              un.name as university_name, un.code as university_code
        FROM applications a
        JOIN programs p ON a.program_id = p.id
-       JOIN universities u ON p.university_id = u.id
+       JOIN universities un ON p.university_id = un.id
        WHERE a.user_id = $1
        ORDER BY a.created_at DESC`,
       [req.user.id]
@@ -102,11 +102,11 @@ router.get('/:id', authenticate, async (req, res) => {
 
     const result = await query(
       `SELECT a.*, p.name as program_name, p.code as program_code, 
-              u.name as university_name, u.code as university_code,
+              un.name as university_name, un.code as university_code,
               u.first_name, u.last_name, u.email
        FROM applications a
        JOIN programs p ON a.program_id = p.id
-       JOIN universities u ON p.university_id = u.id
+       JOIN universities un ON p.university_id = un.id
        LEFT JOIN users u ON a.user_id = u.id
        WHERE a.id = $1`,
       [id]
@@ -254,12 +254,22 @@ router.post('/:id/submit', authenticate, requireStudent, async (req, res) => {
       });
     }
 
-    // Update application status to submitted
+    // Update application status to submitted, trigger AI processing
     const result = await query(
       `UPDATE applications 
-       SET status = 'submitted', updated_at = CURRENT_TIMESTAMP
+       SET status = 'submitted', 
+           submitted_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = $1
        RETURNING *`,
+      [id]
+    );
+    
+    // Auto-set to under_review after submission (AI processing will happen on document upload)
+    await query(
+      `UPDATE applications 
+       SET status = 'under_review'
+       WHERE id = $1 AND status = 'submitted'`,
       [id]
     );
 

@@ -122,6 +122,11 @@ async function init() {
         personal_info JSONB,
         academic_info JSONB,
         academic_history JSONB,
+        ai_verification_status VARCHAR(50),
+        ai_verification_result JSONB,
+        admin_verification_status VARCHAR(50),
+        issue_raised BOOLEAN DEFAULT false,
+        issue_details TEXT,
         submitted_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -138,11 +143,13 @@ async function init() {
         file_path VARCHAR(500),
         file_name VARCHAR(255),
         file_size INTEGER,
+        mime_type VARCHAR(100),
         extracted_data JSONB,
         ai_verification_status VARCHAR(50),
         ai_confidence DECIMAL(5,2),
         admin_verification_status VARCHAR(50),
         admin_notes TEXT,
+        is_rejected BOOLEAN DEFAULT false,
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -156,7 +163,9 @@ async function init() {
         document_type VARCHAR(255) NOT NULL,
         is_required BOOLEAN DEFAULT true,
         is_optional BOOLEAN DEFAULT false,
+        description TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(program_id, document_type)
       )
     `);

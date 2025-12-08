@@ -88,6 +88,13 @@ export const applicationsAPI = {
   submit: (id: string) => api.post(`/applications/${id}/submit`),
 };
 
+// Universities & Programs API
+export const universitiesAPI = {
+  getAll: () => api.get('/admin/universities'),
+  getPrograms: (universityId?: string) => api.get('/admin/programs', { params: { universityId } }),
+  getRequiredDocuments: (programId: string) => api.get(`/admin/programs/${programId}/documents`),
+};
+
 // Documents API
 export const documentsAPI = {
   upload: (formData: FormData) => api.post('/documents/upload', formData, {
@@ -105,8 +112,10 @@ export const adminAPI = {
   approveApplication: (id: string) => api.post(`/admin/applications/${id}/approve`),
   getAnalytics: () => api.get('/admin/analytics'),
   configureDocuments: (programId: string, data: any) => api.post(`/admin/programs/${programId}/documents`, data),
+  getRequiredDocuments: (programId: string) => api.get(`/admin/programs/${programId}/documents`),
   getUniversities: () => api.get('/admin/universities'),
   getPrograms: (params?: any) => api.get('/admin/programs', { params }),
+  getStudents: () => api.get('/admin/students'),
 };
 
 // Payments API

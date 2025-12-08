@@ -355,6 +355,31 @@ router.get('/universities', async (req, res) => {
 });
 
 /**
+ * Get required documents for a program
+ * GET /api/admin/programs/:programId/documents
+ */
+router.get('/programs/:programId/documents', async (req, res) => {
+  try {
+    const { programId } = req.params;
+
+    const result = await query(
+      `SELECT * FROM required_documents 
+       WHERE program_id = $1 
+       ORDER BY is_required DESC, document_type`,
+      [programId]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Get required documents error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get required documents', error: error.message });
+  }
+});
+
+/**
  * Configure required documents for a program
  * POST /api/admin/programs/:programId/documents
  */
@@ -362,6 +387,10 @@ router.post('/programs/:programId/documents', async (req, res) => {
   try {
     const { programId } = req.params;
     const { documentType, isRequired, isOptional, description } = req.body;
+
+    if (!documentType) {
+      return res.status(400).json({ success: false, message: 'Document type is required' });
+    }
 
     const result = await query(
       `INSERT INTO required_documents (program_id, document_type, is_required, is_optional, description)
@@ -380,6 +409,29 @@ router.post('/programs/:programId/documents', async (req, res) => {
   } catch (error) {
     console.error('Configure document error:', error);
     res.status(500).json({ success: false, message: 'Failed to configure document', error: error.message });
+  }
+});
+
+/**
+ * Get programs list
+ * GET /api/admin/programs
+ */
+router.get('/programs', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT p.*, u.name as university_name, u.code as university_code
+       FROM programs p
+       JOIN universities u ON p.university_id = u.id
+       ORDER BY u.name, p.name`
+    );
+
+    res.json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Get programs error:', error);
+    res.status(500).json({ success: false, message: 'Failed to get programs', error: error.message });
   }
 });
 
