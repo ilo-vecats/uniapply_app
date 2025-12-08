@@ -7,9 +7,23 @@ import AdminSidebar from '@/components/AdminSidebar'
 import AdminHeader from '@/components/AdminHeader'
 import api from '@/lib/api'
 
+
+type Refund = {
+  id: number
+  refund_id: string
+  student_name: string
+  email: string
+  application_id: string
+  amount: number
+  reason: string
+  status: 'pending' | 'approved' | 'rejected'
+}
+
 export default function AdminRefundsPage() {
   const router = useRouter()
-  const [refunds, setRefunds] = useState([])
+
+ 
+  const [refunds, setRefunds] = useState<Refund[]>([])
 
   useEffect(() => {
     const token = Cookies.get('token')
@@ -19,7 +33,8 @@ export default function AdminRefundsPage() {
       router.push('/auth/login')
       return
     }
-    // Load refunds - mock data for now
+
+
     setRefunds([
       {
         id: 1,
@@ -70,26 +85,49 @@ export default function AdminRefundsPage() {
                   <th className="text-left text-sm font-medium text-slate-500 px-4 py-3">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
-                {refunds.map((refund: any) => (
+                {refunds.map((refund) => (
                   <tr key={refund.id} className="border-t border-slate-100">
-                    <td className="px-4 py-4 text-sm font-mono text-slate-900">{refund.refund_id}</td>
-                    <td className="px-4 py-4">
-                      <p className="text-sm font-medium text-slate-900">{refund.student_name}</p>
-                      <p className="text-xs text-slate-500">{refund.email}</p>
+                    <td className="px-4 py-4 text-sm font-mono text-slate-900">
+                      {refund.refund_id}
                     </td>
-                    <td className="px-4 py-4 text-sm text-slate-600">{refund.application_id}</td>
-                    <td className="px-4 py-4 text-sm font-medium text-slate-900">₹{refund.amount}</td>
-                    <td className="px-4 py-4 text-sm text-slate-500">{refund.reason}</td>
+
                     <td className="px-4 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        refund.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
-                        refund.status === 'approved' ? 'bg-green-100 text-green-600' :
-                        'bg-red-100 text-red-600'
-                      }`}>
+                      <p className="text-sm font-medium text-slate-900">
+                        {refund.student_name}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {refund.email}
+                      </p>
+                    </td>
+
+                    <td className="px-4 py-4 text-sm text-slate-600">
+                      {refund.application_id}
+                    </td>
+
+                    <td className="px-4 py-4 text-sm font-medium text-slate-900">
+                      ₹{refund.amount}
+                    </td>
+
+                    <td className="px-4 py-4 text-sm text-slate-500">
+                      {refund.reason}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          refund.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-600'
+                            : refund.status === 'approved'
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-red-100 text-red-600'
+                        }`}
+                      >
                         {refund.status}
                       </span>
                     </td>
+
                     <td className="px-4 py-4">
                       <div className="flex gap-2">
                         <button className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700">
@@ -103,6 +141,7 @@ export default function AdminRefundsPage() {
                   </tr>
                 ))}
               </tbody>
+
             </table>
           </div>
         </div>
@@ -110,4 +149,3 @@ export default function AdminRefundsPage() {
     </div>
   )
 }
-
