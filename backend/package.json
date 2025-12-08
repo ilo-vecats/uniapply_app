@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "demo": "NO_DB=true node server.js",
-    "migrate": "node -e \"require('./config/database').init().then(() => process.exit(0)).catch(e => {console.error(e); process.exit(1);})\"",
+    "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js"
   },
   "keywords": ["university", "application", "portal"],

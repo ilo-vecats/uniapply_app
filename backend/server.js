@@ -122,10 +122,24 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
-// START SERVER (NO PROMISE, NO INIT)
-app.listen(PORT, () => {
+// Test database connection on startup
+async function testDatabaseConnection() {
+  try {
+    const { query } = require('./config/database');
+    await query('SELECT 1');
+    console.log('✅ Database connection successful');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    console.error('⚠️  Make sure DB_URL is set correctly and database tables exist.');
+    console.error('⚠️  Run: npm run migrate (to create tables)');
+  }
+}
+
+// START SERVER
+app.listen(PORT, async () => {
   console.log(`🚀 UniApply Backend Server running on port ${PORT}`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  await testDatabaseConnection();
 });
 
 module.exports = app;

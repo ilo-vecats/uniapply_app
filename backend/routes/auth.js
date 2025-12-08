@@ -88,10 +88,12 @@ router.post('/login', async (req, res) => {
         [email]
       );
     } catch (dbError) {
-      console.error('❌ DB QUERY FAILED:', dbError);
+      console.error('❌ DB QUERY FAILED:', dbError.message);
+      console.error('Full error:', dbError);
       return res.status(500).json({
         success: false,
-        message: 'Database error during login'
+        message: 'Database connection error. Please check if database tables exist.',
+        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
       });
     }
 
