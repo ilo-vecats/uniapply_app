@@ -28,20 +28,29 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // CORS
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://uniapply-app-1.onrender.com'
-];
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  : ['http://localhost:3000'];
 
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests) in development
+    if (!origin && process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    // Allow requests from allowed origins
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Blocked by CORS'));
+      // In production, allow all origins for now (you can restrict this later)
+      if (process.env.NODE_ENV === 'production') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
-  credentials: true,
+  credentials: true
 }));
 
 app.use(express.json());

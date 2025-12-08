@@ -6,7 +6,20 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = 'https://uniapply-app.onrender.com/api';
+// API URL Configuration
+// Priority: 1. Environment variable, 2. Auto-detect production, 3. Localhost fallback
+const getApiUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // Auto-detect if running in production (not localhost)
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return 'https://uniapply-app.onrender.com/api';
+  }
+  return 'http://localhost:3001/api';
+};
+
+const API_URL = getApiUrl();
 
 // Create axios instance
 const api = axios.create({
@@ -17,7 +30,7 @@ const api = axios.create({
 });
 
 // Add token to requests
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: any) => {
   const token = Cookies.get('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -27,13 +40,28 @@ api.interceptors.request.use((config) => {
 
 // Handle response errors
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response: any) => response,
+  (error: any) => {
+    // Log error for debugging
+    if (error.response) {
+      console.error('API Error:', {
+        status: error.response.status,
+        data: error.response.data,
+        url: error.config?.url
+      });
+    } else if (error.request) {
+      console.error('Network Error:', error.request);
+    } else {
+      console.error('Error:', error.message);
+    }
+
     if (error.response?.status === 401) {
       // Unauthorized - clear token and redirect to login
       Cookies.remove('token');
       Cookies.remove('userRole');
-      window.location.href = '/auth/login';
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/login';
+      }
     }
     return Promise.reject(error);
   }
