@@ -311,7 +311,7 @@ router.get('/analytics', async (req, res) => {
     let recentApps = { rows: [{ count: '0' }] };
     try {
       recentApps = await query(`
-        SELECT COUNT(*) as count
+        SELECT COUNT(*)::text as count
         FROM applications
         WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
       `);
@@ -322,8 +322,8 @@ router.get('/analytics', async (req, res) => {
     // Get total applications
     let totalApplications = 0;
     try {
-      const totalResult = await query('SELECT COUNT(*) as count FROM applications');
-      totalApplications = parseInt(totalResult.rows[0]?.count || 0);
+      const totalResult = await query('SELECT COUNT(*)::text as count FROM applications');
+      totalApplications = parseInt(totalResult.rows[0]?.count || '0');
     } catch (err) {
       console.error('Error getting total applications:', err.message);
     }
@@ -332,11 +332,11 @@ router.get('/analytics', async (req, res) => {
     let pendingReview = 0;
     try {
       const pendingResult = await query(`
-        SELECT COUNT(*) as count 
+        SELECT COUNT(*)::text as count 
         FROM applications 
         WHERE status IN ('submitted', 'under_review')
       `);
-      pendingReview = parseInt(pendingResult.rows[0]?.count || 0);
+      pendingReview = parseInt(pendingResult.rows[0]?.count || '0');
     } catch (err) {
       console.error('Error getting pending review:', err.message);
     }
@@ -345,11 +345,11 @@ router.get('/analytics', async (req, res) => {
     let openTickets = 0;
     try {
       const ticketsResult = await query(`
-        SELECT COUNT(*) as count 
+        SELECT COUNT(*)::text as count 
         FROM support_tickets 
         WHERE status = 'open'
       `);
-      openTickets = parseInt(ticketsResult.rows[0]?.count || 0);
+      openTickets = parseInt(ticketsResult.rows[0]?.count || '0');
     } catch (err) {
       console.error('Error getting open tickets:', err.message);
     }
