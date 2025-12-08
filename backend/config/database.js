@@ -103,6 +103,8 @@ async function init() {
         code VARCHAR(50) NOT NULL,
         degree_type VARCHAR(50),
         duration INTEGER,
+        application_fee DECIMAL(10,2) DEFAULT 0,
+        eligibility_criteria JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(university_id, code)
       )

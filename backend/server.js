@@ -146,6 +146,24 @@ async function testDatabaseConnection() {
     try {
       await query('SELECT 1 FROM users LIMIT 1');
       console.log('✅ Database tables exist');
+      
+      // Check if admin user exists, if not, create it
+      const bcrypt = require('bcryptjs');
+      const adminCheck = await query('SELECT id FROM users WHERE email = $1 AND role = $2', ['admin@uniapply.com', 'admin']);
+      
+      if (adminCheck.rows.length === 0) {
+        console.log('⚠️  Admin user not found. Creating admin user...');
+        const adminPassword = await bcrypt.hash('admin123', 10);
+        await query(
+          `INSERT INTO users (email, password_hash, role, first_name, last_name)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (email) DO NOTHING`,
+          ['admin@uniapply.com', adminPassword, 'admin', 'Admin', 'User']
+        );
+        console.log('✅ Admin user created: admin@uniapply.com / admin123');
+      } else {
+        console.log('✅ Admin user exists');
+      }
     } catch (tableError) {
       if (tableError.message && tableError.message.includes('does not exist')) {
         console.log('⚠️  Database tables not found. Running migration...');
@@ -153,6 +171,17 @@ async function testDatabaseConnection() {
           const { init } = require('./config/database');
           await init();
           console.log('✅ Database migration completed successfully!');
+          
+          // After migration, create admin user
+          const bcrypt = require('bcryptjs');
+          const adminPassword = await bcrypt.hash('admin123', 10);
+          await query(
+            `INSERT INTO users (email, password_hash, role, first_name, last_name)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (email) DO NOTHING`,
+            ['admin@uniapply.com', adminPassword, 'admin', 'Admin', 'User']
+          );
+          console.log('✅ Admin user created: admin@uniapply.com / admin123');
         } catch (migrationError) {
           console.error('❌ Migration failed:', migrationError.message);
           console.error('⚠️  Please run: npm run migrate');
