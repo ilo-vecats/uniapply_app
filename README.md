@@ -1,6 +1,8 @@
 # UniApply - Unified University Application Portal
 
 A full-stack web application for managing university applications with AI-powered document verification, two-level verification system (AI + Manual), and configurable eligibility criteria.
+deployment
+https://uniapply-app-1.onrender.com
 
 ## 🎯 Features
 
