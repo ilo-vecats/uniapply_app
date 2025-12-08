@@ -165,10 +165,22 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error('❌ UNCAUGHT LOGIN ERROR:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Better error messages for common issues
+    let errorMessage = 'Login failed';
+    if (error.message && error.message.includes('does not exist')) {
+      errorMessage = 'Database tables not found. Please run migration: npm run migrate';
+    } else if (error.message && error.message.includes('connection')) {
+      errorMessage = 'Database connection error. Please check your database configuration.';
+    } else {
+      errorMessage = error.message || 'An unexpected error occurred';
+    }
+    
     return res.status(500).json({
       success: false,
-      message: 'Login crashed',
-      error: error.message
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
