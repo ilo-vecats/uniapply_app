@@ -109,11 +109,13 @@ async function init() {
     await query(`
       CREATE TABLE IF NOT EXISTS applications (
         id SERIAL PRIMARY KEY,
+        application_id VARCHAR(50) UNIQUE,
         user_id INTEGER REFERENCES users(id),
         program_id INTEGER REFERENCES programs(id),
         status VARCHAR(50) DEFAULT 'draft',
         personal_info JSONB,
         academic_info JSONB,
+        academic_history JSONB,
         submitted_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

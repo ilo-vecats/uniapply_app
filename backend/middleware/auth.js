@@ -19,8 +19,16 @@ const authenticate = async (req, res, next) => {
 
     const token = authHeader.substring(7);
     
+    // Check JWT_SECRET
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Server misconfigured (JWT_SECRET missing)' 
+      });
+    }
+    
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Get user from database
     const result = await query(

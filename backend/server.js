@@ -59,12 +59,23 @@ app.use(express.urlencoded({ extended: true }));
 // Redis client for sessions (optional)
 let redisClient;
 if (process.env.REDIS_HOST) {
-  redisClient = redis.createClient({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT || 6379
-  });
+  try {
+    redisClient = redis.createClient({
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT || 6379
+    });
 
-  redisClient.connect().catch(console.error);
+    redisClient.connect().catch((err) => {
+      console.warn('⚠️  Redis connection failed, using memory store:', err.message);
+      redisClient = null;
+    });
+  } catch (err) {
+    console.warn('⚠️  Redis setup failed, using memory store:', err.message);
+    redisClient = null;
+  }
+}
+
+if (redisClient) {
 
   app.use(session({
     store: new RedisStore({ client: redisClient }),
@@ -77,7 +88,9 @@ if (process.env.REDIS_HOST) {
       maxAge: 7 * 24 * 60 * 60 * 1000
     }
   }));
-} else {
+}
+
+if (!redisClient) {
   // Fallback to memory store (development or no Redis)
   app.use(session({
     secret: process.env.JWT_SECRET || 'fallback-secret',
