@@ -72,54 +72,102 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
+
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
     }
 
-    // Find user
-    const result = await query(
-      'SELECT id, email, password_hash, role, first_name, last_name FROM users WHERE email = $1',
-      [email]
-    );
+    
+    let result;
+    try {
+      result = await query(
+        'SELECT id, email, password_hash, role, first_name, last_name FROM users WHERE email = $1',
+        [email]
+      );
+    } catch (dbError) {
+      console.error('❌ DB QUERY FAILED:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Database error during login'
+      });
+    }
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    if (!result.rows.length) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
     }
 
     const user = result.rows[0];
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+
+    if (!user.password_hash) {
+      console.error('❌ USER HAS NO PASSWORD HASH:', user.email);
+      return res.status(500).json({
+        success: false,
+        message: 'User password data corrupted'
+      });
     }
 
-    // Generate JWT token
+
+    let isValidPassword = false;
+    try {
+      isValidPassword = await bcrypt.compare(password, user.password_hash);
+    } catch (bcryptError) {
+      console.error('❌ BCRYPT FAILED:', bcryptError);
+      return res.status(500).json({
+        success: false,
+        message: 'Password verification failed'
+      });
+    }
+
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+ 
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET MISSING');
+      return res.status(500).json({
+        success: false,
+        message: 'Server misconfigured (JWT_SECRET missing)'
+      });
+    }
+
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback-secret',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
-    // Store session
-    req.session.userId = user.id;
-    req.session.userRole = user.role;
+   
+    if (req.session) {
+      req.session.userId = user.id;
+      req.session.userRole = user.role;
+    }
 
-    // Remove password from response
     delete user.password_hash;
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Login successful',
-      data: {
-        user,
-        token
-      }
+      data: { user, token }
     });
+
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ success: false, message: 'Login failed', error: error.message });
+    console.error('❌ UNCAUGHT LOGIN ERROR:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Login crashed',
+      error: error.message
+    });
   }
 });
 
