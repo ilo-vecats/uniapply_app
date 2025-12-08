@@ -7,11 +7,25 @@ import AdminSidebar from '@/components/AdminSidebar'
 import AdminHeader from '@/components/AdminHeader'
 import api from '@/lib/api'
 
+
+type Program = {
+  id: number
+  name: string
+  code: string
+}
+
+type RequiredDoc = {
+  document_type: string
+  is_required: boolean
+}
+
 export default function DocumentConfigPage() {
   const router = useRouter()
-  const [programs, setPrograms] = useState([])
-  const [selectedProgram, setSelectedProgram] = useState<any>(null)
-  const [requiredDocs, setRequiredDocs] = useState([])
+
+
+  const [programs, setPrograms] = useState<Program[]>([])
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
+  const [requiredDocs, setRequiredDocs] = useState<RequiredDoc[]>([])
 
   useEffect(() => {
     const token = Cookies.get('token')
@@ -26,12 +40,13 @@ export default function DocumentConfigPage() {
 
   const loadPrograms = async () => {
     try {
-      // Mock programs for now
+  
       setPrograms([
         { id: 1, name: 'M.Tech Computer Science', code: 'MTECH_CS' },
         { id: 2, name: 'M.Tech Data Science', code: 'MTECH_DS' },
         { id: 3, name: 'MBA', code: 'MBA' }
       ])
+
       setRequiredDocs([
         { document_type: '10th Marksheet', is_required: true },
         { document_type: '12th Marksheet', is_required: true },
@@ -56,6 +71,7 @@ export default function DocumentConfigPage() {
               <h1 className="text-2xl font-bold text-slate-900">Document Configuration</h1>
               <p className="text-slate-500">Configure required documents for each program</p>
             </div>
+
             <button className="px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 flex items-center gap-2">
               <i className="fas fa-plus"></i> Add Document Type
             </button>
@@ -64,8 +80,11 @@ export default function DocumentConfigPage() {
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">Required Documents</h2>
             <div className="space-y-3">
-              {requiredDocs.map((doc: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+              {requiredDocs.map((doc, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-4 border border-slate-200 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <i className="fas fa-file-pdf text-red-500 text-xl"></i>
                     <div>
@@ -75,12 +94,18 @@ export default function DocumentConfigPage() {
                       </p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      doc.is_required ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-600'
-                    }`}>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        doc.is_required
+                          ? 'bg-green-100 text-green-600'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
                       {doc.is_required ? 'Required' : 'Optional'}
                     </span>
+
                     <button className="p-2 text-slate-400 hover:text-slate-600">
                       <i className="fas fa-edit"></i>
                     </button>
@@ -94,4 +119,3 @@ export default function DocumentConfigPage() {
     </div>
   )
 }
-
