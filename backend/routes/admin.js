@@ -273,38 +273,42 @@ router.get('/analytics', async (req, res) => {
     let statusCounts = { rows: [] };
     try {
       statusCounts = await query(`
-        SELECT status, COUNT(*) as count
+        SELECT status, COUNT(*)::integer as count
         FROM applications
         GROUP BY status
       `);
     } catch (err) {
       console.error('Error getting status counts:', err.message);
+      console.error('Full error:', err);
     }
 
     // Get AI verification status counts
     let aiStatusCounts = { rows: [] };
     try {
       aiStatusCounts = await query(`
-        SELECT COALESCE(ai_verification_status, 'not_processed') as ai_verification_status, COUNT(*) as count
+        SELECT COALESCE(ai_verification_status, 'not_processed') as ai_verification_status, COUNT(*)::integer as count
         FROM applications
         GROUP BY ai_verification_status
       `);
     } catch (err) {
       console.error('Error getting AI status counts:', err.message);
+      console.error('Full error:', err);
     }
 
     // Get total revenue (handle if payments table is empty)
-    let revenueResult = { rows: [{ application_fee_revenue: 0, issue_resolution_revenue: 0, total_transactions: 0 }] };
+    let revenueResult = { rows: [{ application_fee_revenue: '0', issue_resolution_revenue: '0', total_transactions: '0' }] };
     try {
-      revenueResult = await query(`
+      const revResult = await query(`
         SELECT 
-          COALESCE(SUM(CASE WHEN payment_type = 'application_fee' AND status = 'completed' THEN amount ELSE 0 END), 0) as application_fee_revenue,
-          COALESCE(SUM(CASE WHEN payment_type = 'issue_resolution' AND status = 'completed' THEN amount ELSE 0 END), 0) as issue_resolution_revenue,
-          COUNT(*) as total_transactions
+          COALESCE(SUM(CASE WHEN payment_type = 'application_fee' AND status = 'completed' THEN amount ELSE 0 END), 0)::text as application_fee_revenue,
+          COALESCE(SUM(CASE WHEN payment_type = 'issue_resolution' AND status = 'completed' THEN amount ELSE 0 END), 0)::text as issue_resolution_revenue,
+          COUNT(*)::text as total_transactions
         FROM payments
       `);
+      revenueResult = revResult;
     } catch (err) {
       console.error('Error getting revenue:', err.message);
+      console.error('Full error:', err);
     }
 
     // Get recent applications (last 7 days)
@@ -359,10 +363,10 @@ router.get('/analytics', async (req, res) => {
       data: {
         statusCounts: statusCounts.rows || [],
         aiStatusCounts: aiStatusCounts.rows || [],
-        revenue: revenueResult.rows[0] || {
-          application_fee_revenue: 0,
-          issue_resolution_revenue: 0,
-          total_transactions: 0
+        revenue: {
+          application_fee_revenue: parseFloat(revenueResult.rows[0]?.application_fee_revenue || '0'),
+          issue_resolution_revenue: parseFloat(revenueResult.rows[0]?.issue_resolution_revenue || '0'),
+          total_transactions: parseInt(revenueResult.rows[0]?.total_transactions || '0')
         },
         recentApplications: parseInt(recentApps.rows[0]?.count || 0),
         totalApplications,
