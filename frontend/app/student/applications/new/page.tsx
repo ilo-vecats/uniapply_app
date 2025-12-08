@@ -9,7 +9,6 @@ import Link from 'next/link'
 import { documentsAPI, applicationsAPI } from '@/lib/api'
 import { useDropzone } from 'react-dropzone'
 
-// ✅ TYPES
 type DocumentItem = {
   document_type: string
   admin_verification_status?: string
@@ -25,12 +24,12 @@ type RequiredDoc = {
 
 export default function DocumentUploadPage() {
   const router = useRouter()
-  const params = useParams<{ id: string }>()  // ✅ FIXED
+  const params = useParams<{ id: string }>()  
   const applicationId = params.id
 
   const [application, setApplication] = useState<any>(null)
 
-  // ✅ CLEAN + SAFE
+  
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [requiredDocs, setRequiredDocs] = useState<RequiredDoc[]>([])
   const [uploading, setUploading] = useState(false)
@@ -55,7 +54,7 @@ export default function DocumentUploadPage() {
       setApplication(appRes.data?.data ?? null)
       setDocuments(docsRes.data?.data ?? [])
 
-      // ✅ Mock required documents
+   
       setRequiredDocs([
         { document_type: 'Aadhar Card', is_required: true },
         { document_type: '10th Marksheet', is_required: true },
