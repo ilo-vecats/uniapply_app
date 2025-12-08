@@ -52,7 +52,16 @@ router.post('/application-fee', authenticate, requireStudent, async (req, res) =
       });
     }
 
-    if (application.payment_status === 'completed') {
+    // Check if payment already exists for this application
+    const existingPayment = await query(
+      `SELECT id FROM payments 
+       WHERE application_id = $1 
+       AND payment_type = 'application_fee' 
+       AND status = 'completed'`,
+      [applicationId]
+    );
+
+    if (existingPayment.rows.length > 0) {
       return res.status(400).json({ 
         success: false, 
         message: 'Payment already completed' 

@@ -175,6 +175,7 @@ async function init() {
     await query(`
       CREATE TABLE IF NOT EXISTS payments (
         id SERIAL PRIMARY KEY,
+        payment_id VARCHAR(100) UNIQUE,
         user_id INTEGER REFERENCES users(id),
         application_id INTEGER REFERENCES applications(id),
         payment_type VARCHAR(50) NOT NULL,

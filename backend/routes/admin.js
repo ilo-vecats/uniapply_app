@@ -54,16 +54,21 @@ router.get('/applications', async (req, res) => {
 
     res.json({
       success: true,
-      data: result.rows,
+      data: result.rows || [],
       pagination: {
         limit: parseInt(limit),
         offset: parseInt(offset),
-        total: result.rowCount
+        total: result.rowCount || 0
       }
     });
   } catch (error) {
     console.error('Get applications error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get applications' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get applications',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -113,7 +118,12 @@ router.get('/applications/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Get application details error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get application details' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get application details',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -260,47 +270,114 @@ router.post('/applications/:id/approve', async (req, res) => {
 router.get('/analytics', async (req, res) => {
   try {
     // Get application status counts
-    const statusCounts = await query(`
-      SELECT status, COUNT(*) as count
-      FROM applications
-      GROUP BY status
-    `);
+    let statusCounts = { rows: [] };
+    try {
+      statusCounts = await query(`
+        SELECT status, COUNT(*) as count
+        FROM applications
+        GROUP BY status
+      `);
+    } catch (err) {
+      console.error('Error getting status counts:', err.message);
+    }
 
     // Get AI verification status counts
-    const aiStatusCounts = await query(`
-      SELECT ai_verification_status, COUNT(*) as count
-      FROM applications
-      GROUP BY ai_verification_status
-    `);
+    let aiStatusCounts = { rows: [] };
+    try {
+      aiStatusCounts = await query(`
+        SELECT COALESCE(ai_verification_status, 'not_processed') as ai_verification_status, COUNT(*) as count
+        FROM applications
+        GROUP BY ai_verification_status
+      `);
+    } catch (err) {
+      console.error('Error getting AI status counts:', err.message);
+    }
 
-    // Get total revenue
-    const revenueResult = await query(`
-      SELECT 
-        SUM(CASE WHEN payment_type = 'application_fee' AND status = 'completed' THEN amount ELSE 0 END) as application_fee_revenue,
-        SUM(CASE WHEN payment_type = 'issue_resolution' AND status = 'completed' THEN amount ELSE 0 END) as issue_resolution_revenue,
-        COUNT(*) as total_transactions
-      FROM payments
-    `);
+    // Get total revenue (handle if payments table is empty)
+    let revenueResult = { rows: [{ application_fee_revenue: 0, issue_resolution_revenue: 0, total_transactions: 0 }] };
+    try {
+      revenueResult = await query(`
+        SELECT 
+          COALESCE(SUM(CASE WHEN payment_type = 'application_fee' AND status = 'completed' THEN amount ELSE 0 END), 0) as application_fee_revenue,
+          COALESCE(SUM(CASE WHEN payment_type = 'issue_resolution' AND status = 'completed' THEN amount ELSE 0 END), 0) as issue_resolution_revenue,
+          COUNT(*) as total_transactions
+        FROM payments
+      `);
+    } catch (err) {
+      console.error('Error getting revenue:', err.message);
+    }
 
-    // Get recent applications
-    const recentApps = await query(`
-      SELECT COUNT(*) as count
-      FROM applications
-      WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
-    `);
+    // Get recent applications (last 7 days)
+    let recentApps = { rows: [{ count: '0' }] };
+    try {
+      recentApps = await query(`
+        SELECT COUNT(*) as count
+        FROM applications
+        WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
+      `);
+    } catch (err) {
+      console.error('Error getting recent apps:', err.message);
+    }
+
+    // Get total applications
+    let totalApplications = 0;
+    try {
+      const totalResult = await query('SELECT COUNT(*) as count FROM applications');
+      totalApplications = parseInt(totalResult.rows[0]?.count || 0);
+    } catch (err) {
+      console.error('Error getting total applications:', err.message);
+    }
+
+    // Get pending review count
+    let pendingReview = 0;
+    try {
+      const pendingResult = await query(`
+        SELECT COUNT(*) as count 
+        FROM applications 
+        WHERE status IN ('submitted', 'under_review')
+      `);
+      pendingReview = parseInt(pendingResult.rows[0]?.count || 0);
+    } catch (err) {
+      console.error('Error getting pending review:', err.message);
+    }
+
+    // Get open tickets count
+    let openTickets = 0;
+    try {
+      const ticketsResult = await query(`
+        SELECT COUNT(*) as count 
+        FROM support_tickets 
+        WHERE status = 'open'
+      `);
+      openTickets = parseInt(ticketsResult.rows[0]?.count || 0);
+    } catch (err) {
+      console.error('Error getting open tickets:', err.message);
+    }
 
     res.json({
       success: true,
       data: {
-        statusCounts: statusCounts.rows,
-        aiStatusCounts: aiStatusCounts.rows,
-        revenue: revenueResult.rows[0],
-        recentApplications: recentApps.rows[0].count
+        statusCounts: statusCounts.rows || [],
+        aiStatusCounts: aiStatusCounts.rows || [],
+        revenue: revenueResult.rows[0] || {
+          application_fee_revenue: 0,
+          issue_resolution_revenue: 0,
+          total_transactions: 0
+        },
+        recentApplications: parseInt(recentApps.rows[0]?.count || 0),
+        totalApplications,
+        pendingReview,
+        openTickets
       }
     });
   } catch (error) {
     console.error('Get analytics error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get analytics' });
+    console.error('Full error:', error.stack);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get analytics',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
