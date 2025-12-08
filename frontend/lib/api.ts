@@ -6,7 +6,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_URL = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api`;
+const API_URL = 'https://uniapply-app.onrender.com/api';
 
 // Create axios instance
 const api = axios.create({
