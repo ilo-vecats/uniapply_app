@@ -38,7 +38,28 @@ export default function RegisterPage() {
         router.push('/student/dashboard')
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed')
+      console.error('Registration error:', err);
+      console.error('Error details:', {
+        response: err.response?.data,
+        message: err.message,
+        status: err.response?.status
+      });
+      
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = typeof err.response.data.error === 'string' 
+          ? err.response.data.error 
+          : 'Database error occurred. Please contact support.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. The database might not be set up yet. Please contact support.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false)
     }

@@ -21,34 +21,104 @@ router.post('/register', async (req, res) => {
 
     // Validation
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email and password are required' 
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 6 characters long' 
+      });
     }
 
     // Check if user already exists
-    const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
+    let existingUser;
+    try {
+      existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
+    } catch (dbError) {
+      console.error('❌ DB QUERY FAILED (check existing user):', dbError.message);
+      console.error('Full error:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection error. Please check if database tables exist.',
+        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+      });
+    }
+
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({ success: false, message: 'User already exists' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'User with this email already exists' 
+      });
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    let passwordHash;
+    try {
+      passwordHash = await bcrypt.hash(password, 10);
+    } catch (bcryptError) {
+      console.error('❌ BCRYPT HASH FAILED:', bcryptError);
+      return res.status(500).json({
+        success: false,
+        message: 'Password encryption failed'
+      });
+    }
+
+    // Check JWT_SECRET
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET MISSING');
+      return res.status(500).json({
+        success: false,
+        message: 'Server misconfigured (JWT_SECRET missing)'
+      });
+    }
 
     // Create user
-    const result = await query(
-      `INSERT INTO users (email, password_hash, role, first_name, last_name, phone)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, email, role, first_name, last_name`,
-      [email, passwordHash, role, firstName, lastName, phone]
-    );
+    let result;
+    try {
+      result = await query(
+        `INSERT INTO users (email, password_hash, role, first_name, last_name, phone)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING id, email, role, first_name, last_name`,
+        [email, passwordHash, role, firstName, lastName, phone]
+      );
+    } catch (dbError) {
+      console.error('❌ DB INSERT FAILED:', dbError.message);
+      console.error('Full error:', dbError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create user. Database error occurred.',
+        error: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+      });
+    }
+
+    if (!result.rows || result.rows.length === 0) {
+      return res.status(500).json({
+        success: false,
+        message: 'User creation failed - no data returned'
+      });
+    }
 
     const user = result.rows[0];
 
     // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
+    let token;
+    try {
+      token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+    } catch (jwtError) {
+      console.error('❌ JWT SIGN FAILED:', jwtError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to generate authentication token'
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -59,8 +129,26 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ success: false, message: 'Registration failed', error: error.message });
+    console.error('❌ UNCAUGHT REGISTRATION ERROR:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Better error messages for common issues
+    let errorMessage = 'Registration failed';
+    if (error.message && error.message.includes('does not exist')) {
+      errorMessage = 'Database tables not found. Please run migration: npm run migrate';
+    } else if (error.message && error.message.includes('connection')) {
+      errorMessage = 'Database connection error. Please check your database configuration.';
+    } else if (error.message && error.message.includes('duplicate key')) {
+      errorMessage = 'User with this email already exists';
+    } else {
+      errorMessage = error.message || 'An unexpected error occurred during registration';
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
